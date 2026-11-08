@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "setup": "node scripts/install-yt-dlp.mjs",
+    "postinstall": "node scripts/install-yt-dlp.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "next": "16.4.5",

@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pega Vídeo
 
-## Getting Started
+Cole uma URL, escolha a qualidade e baixe o vídeo — ou só o áudio em MP3. Tudo roda localmente no seu computador, sem cadastro, anúncios ou upload para terceiros.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-black) ![yt-dlp](https://img.shields.io/badge/powered%20by-yt--dlp-orange)
+
+## O que ele faz
+
+- Detecta o vídeo em links de YouTube, TikTok, Instagram, X, Vimeo, Facebook e mais de 1.000 sites suportados pelo yt-dlp.
+- Lista as opções reais de download: resoluções, codecs, FPS e tamanho estimado.
+- Oferece “Melhor qualidade”, vídeos em MP4/WebM (mesclando áudio automaticamente) e áudio em MP3 ou no formato original.
+- Mostra progresso, velocidade e tempo restante, com opção de cancelar.
+- Guarda os últimos links analisados no navegador para baixar de novo.
+
+## Requisitos
+
+- Node.js 20+
+- ffmpeg (necessário para mesclar vídeo + áudio e converter MP3):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+brew install ffmpeg
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O yt-dlp é configurado automaticamente durante o `npm install`. Se houver Python 3.9+ disponível, o setup usa o pacote oficial (inicia em menos de 1 segundo); caso contrário, baixa o binário standalone para `bin/`. Para forçar uma atualização:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run setup -- --force
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Rodar
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Abra [http://localhost:3000](http://localhost:3000).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Outros scripts:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build      # build de produção
+npm run start      # serve o build
+npm run lint       # eslint
+npm run typecheck  # TypeScript
+npm run setup      # baixa/atualiza o yt-dlp local
+```
 
-## Deploy on Vercel
+## Como funciona
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. `POST /api/resolve` roda `yt-dlp -J` no link e agrupa os formatos em opções de vídeo e áudio.
+2. `POST /api/downloads` cria um job em background (`yt-dlp` grava em uma pasta temporária).
+3. A UI acompanha o progresso via polling em `GET /api/downloads`.
+4. `GET /api/downloads/file?id=…` entrega o arquivo com suporte a `Range`; a pasta temporária é limpa após 30 minutos.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Temporários ficam em `$TMPDIR/pega-video`.
+
+## Cookies (YouTube, Instagram e conteúdo privado)
+
+Alguns sites exigem login ou pedem verificação anti-bot. O yt-dlp pode reaproveitar os cookies do seu navegador:
+
+```bash
+# usa os cookies do Chrome (macOS pode pedir a senha do Keychain)
+YTDLP_COOKIES_FROM_BROWSER=chrome npm run dev
+
+# ou exporte um cookies.txt e aponte o caminho
+YTDLP_COOKIE_FILE=/caminho/para/cookies.txt npm run dev
+```
+
+Também é possível definir `YTDLP_PATH` (binário alternativo) e `FFMPEG_PATH`.
+
+## Estrutura
+
+```
+app/
+  api/resolve/          # metadata + formatos
+  api/downloads/        # cria/consulta/cancela jobs
+  api/downloads/file/   # entrega o arquivo (com Range)
+components/             # UI
+lib/
+  ytdlp.ts              # wrapper do yt-dlp e normalização dos formatos
+  jobs.ts               # fila de downloads em memória
+  types.ts              # tipos compartilhados
+scripts/
+  install-yt-dlp.mjs    # baixa o binário local
+bin/                    # yt-dlp (ignorado pelo git)
+```
+
+## Limitações
+
+- Os downloads vivem em memória no processo do Next; reiniciar o servidor cancela jobs em andamento. Para uso pessoal/local isso é suficiente.
+- DRM (Netflix, Disney+, etc.) não é suportado.
+- O app não hospeda nem distribui conteúdo. Use apenas para vídeos que você tem direito de baixar.
