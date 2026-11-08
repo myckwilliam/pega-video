@@ -14,13 +14,17 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const isWindows = process.platform === "win32";
+const isVercel = Boolean(process.env.VERCEL);
 const binDir = join(root, "bin");
-const wrapper = join(binDir, "yt-dlp");
+const wrapper = join(binDir, isWindows ? "yt-dlp.exe" : "yt-dlp");
 const zipapp = join(binDir, "yt-dlp.pyz");
+const venvDir = join(root, "node_modules", ".cache", "pega-video", "venv");
+const venvPython = isWindows
+  ? join(venvDir, "Scripts", "python.exe")
+  : join(venvDir, "bin", "python");
 const python = process.env.YTDLP_PYTHON || "python3";
 const force =
   process.argv.includes("--force") || process.env.YTDLP_FORCE_UPDATE === "1";
-const isVercel = Boolean(process.env.VERCEL);
 
 function versionOf(binary) {
   try {
@@ -49,6 +53,18 @@ function pythonVersion() {
   }
 }
 
+function hasModule(pythonBinary, module) {
+  try {
+    execFileSync(pythonBinary, ["-c", `import ${module}`], {
+      stdio: "ignore",
+      timeout: 30_000,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function checkFfmpeg() {
   try {
     execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -70,7 +86,11 @@ if [ -z "$SSL_CERT_FILE" ]; then
     export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
   fi
 fi
-exec ${python} "$DIR/yt-dlp.pyz" "$@"
+PY="$DIR/../node_modules/.cache/pega-video/venv/bin/python"
+if [ ! -x "$PY" ]; then
+  PY=python3
+fi
+exec "$PY" "$DIR/yt-dlp.pyz" "$@"
 `;
 
   writeFileSync(wrapper, script, { mode: 0o755 });
@@ -85,6 +105,60 @@ async function download(url, target) {
   await pipeline(Readable.fromWeb(response.body), createWriteStream(target));
 }
 
+function ensureVenv() {
+  if (isWindows || isVercel) return false;
+
+  const pyVersion = pythonVersion();
+  if (!pyVersion) {
+    console.warn(
+      "Aviso: Python 3 não encontrado. O yt-dlp vai usar o binário standalone; TikTok e Instagram podem falhar.",
+    );
+    return false;
+  }
+
+  try {
+    if (!existsSync(venvPython)) {
+      console.log("Criando ambiente Python local…");
+      mkdirSync(dirname(venvDir), { recursive: true });
+      execFileSync(python, ["-m", "venv", "--copies", venvDir], {
+        stdio: "ignore",
+      });
+    }
+
+    if (!existsSync(venvPython)) {
+      throw new Error("não foi possível criar a venv");
+    }
+
+    if (!hasModule(venvPython, "curl_cffi")) {
+      console.log(
+        "Instalando curl_cffi (necessário para TikTok/Instagram)…",
+      );
+      execFileSync(
+        venvPython,
+        [
+          "-m",
+          "pip",
+          "install",
+          "--quiet",
+          "--disable-pip-version-check",
+          "--upgrade",
+          "curl_cffi",
+        ],
+        { stdio: "inherit" },
+      );
+    }
+
+    return hasModule(venvPython, "curl_cffi");
+  } catch (error) {
+    console.warn(
+      `Aviso: não foi possível preparar o curl_cffi (${
+        error instanceof Error ? error.message : error
+      }). TikTok/Instagram podem exigir cookies.`,
+    );
+    return false;
+  }
+}
+
 if (process.env.YTDLP_SKIP_DOWNLOAD === "1") {
   console.log("Instalação do yt-dlp ignorada (YTDLP_SKIP_DOWNLOAD=1).");
   process.exit(0);
@@ -92,54 +166,49 @@ if (process.env.YTDLP_SKIP_DOWNLOAD === "1") {
 
 mkdirSync(binDir, { recursive: true });
 
-if (!isWindows && !isVercel && !force && existsSync(zipapp) && existsSync(wrapper)) {
-  const version = versionOf(wrapper);
-  if (version) {
-    console.log(`yt-dlp local pronto (${version}).`);
-    checkFfmpeg();
-    process.exit(0);
-  }
-}
-
-const systemVersion = force ? null : versionOf("yt-dlp");
-if (systemVersion) {
-  console.log(
-    `yt-dlp do sistema encontrado (${systemVersion}). Usando o binário global.`,
-  );
-  checkFfmpeg();
-  process.exit(0);
-}
+// Versões antigas criavam a venv em bin/venv; symlinks externos quebravam o Turbopack.
+rmSync(join(binDir, "venv"), { recursive: true, force: true });
 
 if (!isWindows && !isVercel) {
-  const pyVersion = pythonVersion();
+  ensureVenv();
 
-  if (pyVersion) {
-    console.log(
-      `Usando Python ${pyVersion} com o pacote oficial do yt-dlp (inicialização rápida)…`,
-    );
-
+  if (force || !existsSync(zipapp)) {
+    console.log("Baixando o pacote oficial do yt-dlp…");
     try {
       await download(
         "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp",
         zipapp,
       );
-      writeWrapper();
-
-      const version = versionOf(wrapper);
-      if (version) {
-        console.log(`yt-dlp instalado em bin/yt-dlp (${version}).`);
-        checkFfmpeg();
-        process.exit(0);
-      }
     } catch (error) {
       console.warn(
-        `Não foi possível preparar o yt-dlp via Python: ${
+        `Não foi possível baixar o yt-dlp: ${
           error instanceof Error ? error.message : error
         }`,
       );
       rmSync(zipapp, { force: true });
-      rmSync(wrapper, { force: true });
     }
+  }
+
+  if (existsSync(zipapp)) {
+    writeWrapper();
+    const version = versionOf(wrapper);
+    if (version) {
+      console.log(`yt-dlp local pronto (${version}).`);
+      checkFfmpeg();
+      process.exit(0);
+    }
+  }
+}
+
+if (!isVercel) {
+  const systemVersion = force ? null : versionOf("yt-dlp");
+  if (systemVersion) {
+    if (!existsSync(zipapp)) rmSync(wrapper, { force: true });
+    console.log(
+      `yt-dlp do sistema encontrado (${systemVersion}). Usando o binário global.`,
+    );
+    checkFfmpeg();
+    process.exit(0);
   }
 }
 

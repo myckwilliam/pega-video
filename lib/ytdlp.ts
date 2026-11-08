@@ -356,6 +356,15 @@ function sizeOf(format: YtDlpFormat): number | null {
   return typeof value === "number" && value > 0 ? value : null;
 }
 
+function maxSize(formats: YtDlpFormat[]): number | null {
+  let max: number | null = null;
+  for (const format of formats) {
+    const size = sizeOf(format);
+    if (size !== null && (max === null || size > max)) max = size;
+  }
+  return max;
+}
+
 function isStoryboard(format: YtDlpFormat): boolean {
   const note = String(format.format_note ?? "").toLowerCase();
   return (
@@ -366,10 +375,20 @@ function isStoryboard(format: YtDlpFormat): boolean {
 }
 
 function resolutionLabel(format: YtDlpFormat): string {
-  const height = format.height && format.height > 0 ? Math.round(format.height) : null;
+  const height =
+    format.height && format.height > 0 ? Math.round(format.height) : null;
+  const width = format.width && format.width > 0 ? Math.round(format.width) : null;
   const fps = format.fps && format.fps > 30 ? Math.round(format.fps) : null;
+  const suffix = fps ? `${fps}` : "";
 
-  if (height) return `${height}p${fps ? `${fps}` : ""}`;
+  // Format IDs/notes often trazem a qualidade real (ex.: "540p" no TikTok).
+  const hint = `${format.format_note ?? ""} ${format.format_id ?? ""}`;
+  const hinted = hint.match(/(\d{3,4})p/i);
+  if (hinted) return `${hinted[1]}p${suffix}`;
+
+  // Em vídeos verticais, usa o lado menor (ex.: 1080x1920 → 1080p).
+  const shortSide = width && height ? Math.min(width, height) : height;
+  if (shortSide) return `${shortSide}p${suffix}`;
 
   const fallback = String(format.resolution ?? "").trim();
   if (fallback) return fallback.replace(/\s+/g, " ");
@@ -396,30 +415,30 @@ export function buildVideoOptions(
   formats: YtDlpFormat[],
   bestHeight: number | null,
 ): FormatOption[] {
-  const bestAudioSize = formats
-    .filter((format) => classifyFormat(format) === "audio")
-    .map(sizeOf)
-    .filter((size): size is number => size !== null)
-    .reduce<number | null>(
-      (max, size) => (max === null || size > max ? size : max),
-      null,
-    );
+  const audioFormats = formats.filter(
+    (format) => classifyFormat(format) === "audio",
+  );
+  const combinedFormats = formats.filter(
+    (format) => classifyFormat(format) === "combined",
+  );
+  const videoOnlyFormats = formats.filter(
+    (format) => classifyFormat(format) === "video",
+  );
 
-  const bestVideoSize = formats
-    .filter((format) => {
-      const kind = classifyFormat(format);
-      return kind === "video" || kind === "combined";
-    })
-    .map(sizeOf)
-    .filter((size): size is number => size !== null)
-    .reduce<number | null>(
-      (max, size) => (max === null || size > max ? size : max),
-      null,
-    );
+  const bestAudioSize = maxSize(audioFormats);
+  const bestCombinedSize = maxSize(combinedFormats);
+  const bestVideoOnlySize = maxSize(videoOnlyFormats);
+  const hasVideoOnly = videoOnlyFormats.length > 0;
+
+  const bestFilesize = hasVideoOnly
+    ? bestVideoOnlySize !== null
+      ? bestVideoOnlySize + (bestAudioSize ?? 0)
+      : bestCombinedSize
+    : bestCombinedSize;
 
   const options: FormatOption[] = [
     {
-      selector: "bv*+ba/b",
+      selector: hasVideoOnly ? "bv*+ba/b" : "best",
       kind: "best",
       label: "Melhor",
       ext: null,
@@ -427,9 +446,10 @@ export function buildVideoOptions(
       fps: null,
       vcodec: null,
       acodec: null,
-      filesize:
-        bestVideoSize !== null ? bestVideoSize + (bestAudioSize ?? 0) : null,
-      note: "Melhor vídeo + melhor áudio disponíveis",
+      filesize: bestFilesize,
+      note: hasVideoOnly
+        ? "Melhor vídeo + melhor áudio disponíveis"
+        : "Melhor vídeo com áudio em um único arquivo",
       recommended: true,
     },
   ];

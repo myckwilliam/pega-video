@@ -10,6 +10,7 @@ import {
   cookieArgs,
   ffmpegHint,
   friendlyError,
+  isSafeSelector,
   sanitizeFilename,
   ytdlpBinary,
 } from "@/lib/ytdlp";
@@ -291,11 +292,11 @@ export async function createJob(input: CreateJobInput): Promise<JobView> {
   const dir = await fs.promises.mkdtemp(path.join(store.root, "job-"));
 
   const selector =
-    input.kind === "best"
-      ? "bv*+ba/b"
-      : input.kind === "mp3"
-        ? "bestaudio/best"
-        : input.selector;
+    input.kind === "mp3"
+      ? "bestaudio/best"
+      : isSafeSelector(input.selector)
+        ? input.selector
+        : "bv*+ba/b";
 
   const job: Job = {
     id,

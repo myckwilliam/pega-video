@@ -33,6 +33,8 @@ export async function POST(request: Request) {
         throw new AppError("Formato de vídeo inválido.", 400);
       }
       selector = data.selector;
+    } else if (kind === "best" && isSafeSelector(data.selector)) {
+      selector = data.selector;
     }
 
     const mergeExt =

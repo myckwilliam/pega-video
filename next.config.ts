@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   outputFileTracingIncludes: {
-    "/api/resolve": ["./bin/**"],
-    "/api/downloads": ["./bin/**"],
-    "/api/downloads/file": ["./bin/**"],
+    "/api/resolve": ["./bin/yt-dlp", "./bin/yt-dlp.pyz"],
+    "/api/downloads": ["./bin/yt-dlp", "./bin/yt-dlp.pyz"],
+    "/api/downloads/file": ["./bin/yt-dlp", "./bin/yt-dlp.pyz"],
   },
   turbopack: {
     root: import.meta.dirname,

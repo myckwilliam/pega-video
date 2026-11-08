@@ -7,6 +7,7 @@ Cole uma URL, escolha a qualidade e baixe o vídeo — ou só o áudio em MP3. T
 ## O que ele faz
 
 - Detecta o vídeo em links de YouTube, TikTok, Instagram, X, Vimeo, Facebook e mais de 1.000 sites suportados pelo yt-dlp.
+- No TikTok, o setup instala `curl_cffi` em uma venv local para o yt-dlp conseguir impersonar o navegador e contornar o desafio anti-bot.
 - Lista as opções reais de download: resoluções, codecs, FPS e tamanho estimado.
 - Oferece “Melhor qualidade”, vídeos em MP4/WebM (mesclando áudio automaticamente) e áudio em MP3 ou no formato original.
 - Mostra progresso, velocidade e tempo restante, com opção de cancelar.
@@ -15,6 +16,7 @@ Cole uma URL, escolha a qualidade e baixe o vídeo — ou só o áudio em MP3. T
 ## Requisitos
 
 - Node.js 20+
+- Python 3.9+ (opcional; usado pelo TikTok/Instagram via `curl_cffi` — o setup cria a venv automaticamente)
 - ffmpeg (necessário para mesclar vídeo + áudio e converter MP3):
 
 ```bash
@@ -68,6 +70,15 @@ YTDLP_COOKIE_FILE=/caminho/para/cookies.txt npm run dev
 ```
 
 Também é possível definir `YTDLP_PATH` (binário alternativo) e `FFMPEG_PATH`.
+
+### TikTok e Instagram
+
+O setup cria uma venv em `node_modules/.cache/pega-video/venv` e instala `curl_cffi`, necessário para o yt-dlp impersonar o TLS do navegador. Sem isso o TikTok responde com um desafio e o download falha. Para refazer o ambiente:
+
+```bash
+rm -rf node_modules/.cache/pega-video/venv && npm run setup
+```
+
 
 ## Estrutura
 
