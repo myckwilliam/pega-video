@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "prebuild": "node scripts/install-yt-dlp.mjs",
     "setup": "node scripts/install-yt-dlp.mjs",
+    "share": "node scripts/share.mjs",
     "postinstall": "node scripts/install-yt-dlp.mjs"
   },
   "engines": {

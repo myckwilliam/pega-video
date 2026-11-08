@@ -8,6 +8,7 @@ import { DownloadCard } from "@/components/download-card";
 import { VideoResult } from "@/components/video-result";
 import {
   AlertIcon,
+  CheckIcon,
   ClipboardIcon,
   CloseIcon,
   DownloadIcon,
@@ -33,6 +34,8 @@ interface HistoryEntry {
 }
 
 const HISTORY_KEY = "pega-video:history:v1";
+const LOCAL_URL_KEY = "pega-video:local-url:v1";
+const DEFAULT_LOCAL_URL = "http://localhost:3000";
 const PLATFORMS = ["YouTube", "TikTok", "Instagram", "X", "Vimeo", "Facebook"];
 
 const STEPS = [
@@ -89,7 +92,21 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
-export function VideoDownloader() {
+function normalizeLocalUrl(value: string): string | null {
+  let raw = value.trim();
+  if (!raw) return null;
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) raw = `http://${raw}`;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+export function VideoDownloader({ serverLocal }: { serverLocal: boolean }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,9 +115,14 @@ export function VideoDownloader() {
   const [jobs, setJobs] = useState<JobView[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [pasting, setPasting] = useState(false);
+  const [localUrl, setLocalUrl] = useState("");
+  const [localUrlDraft, setLocalUrlDraft] = useState("");
+  const [localSettingsOpen, setLocalSettingsOpen] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const autoAnalyzedRef = useRef(false);
 
   const activeJobs = jobs.filter(isActiveJob);
   const hasActiveJobs = activeJobs.length > 0;
@@ -160,6 +182,59 @@ export function VideoDownloader() {
       clearInterval(timer);
     };
   }, [hasActiveJobs]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (!serverLocal) {
+        const params = new URLSearchParams(window.location.search);
+        const fromLink = normalizeLocalUrl(params.get("local") ?? "");
+
+        let stored = "";
+        try {
+          stored = localStorage.getItem(LOCAL_URL_KEY) ?? "";
+        } catch {
+          // localStorage indisponível.
+        }
+
+        const fallback = window.matchMedia("(pointer: coarse)").matches
+          ? ""
+          : DEFAULT_LOCAL_URL;
+        const resolved =
+          fromLink ?? normalizeLocalUrl(stored) ?? fallback;
+
+        setLocalUrl(resolved);
+        setLocalUrlDraft(resolved);
+
+        if (fromLink) {
+          try {
+            localStorage.setItem(LOCAL_URL_KEY, fromLink);
+          } catch {
+            // Ignora storage indisponível.
+          }
+
+          params.delete("local");
+          const query = params.toString();
+          window.history.replaceState(
+            {},
+            "",
+            `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+          );
+        }
+      }
+
+      if (serverLocal && !autoAnalyzedRef.current) {
+        autoAnalyzedRef.current = true;
+        const initial = new URLSearchParams(window.location.search).get("url");
+        if (initial) {
+          setUrl(initial);
+          void analyze(initial);
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function saveHistory(entry: HistoryEntry) {
     setHistory((current) => {
@@ -242,6 +317,11 @@ export function VideoDownloader() {
   }
 
   async function handleDownload(option: FormatOption) {
+    if (!serverLocal) {
+      handleProcessLocal();
+      return;
+    }
+
     if (!video || pendingSelector) return;
 
     setPendingSelector(option.selector);
@@ -286,6 +366,66 @@ export function VideoDownloader() {
     }
   }
 
+  function handleProcessLocal() {
+    if (!localUrl) {
+      setLocalError(
+        "No celular, configure o endereço do seu computador: IP na mesma Wi-Fi ou uma URL de túnel.",
+      );
+      setLocalSettingsOpen(true);
+      return;
+    }
+
+    let target: URL;
+    try {
+      target = new URL(localUrl);
+    } catch {
+      setLocalError("O endereço configurado não é uma URL válida.");
+      setLocalSettingsOpen(true);
+      return;
+    }
+
+    if (target.protocol !== "http:" && target.protocol !== "https:") {
+      setLocalError("Use um endereço http:// ou https://.");
+      setLocalSettingsOpen(true);
+      return;
+    }
+
+    const loopback = ["localhost", "127.0.0.1", "::1"].includes(target.hostname);
+    const phone = window.matchMedia("(pointer: coarse)").matches;
+
+    if (loopback && phone) {
+      setLocalError(
+        "No celular, localhost aponta para o próprio celular. Use o IP do Mac ou uma URL de túnel.",
+      );
+      setLocalSettingsOpen(true);
+      return;
+    }
+
+    if (url.trim()) target.searchParams.set("url", url.trim());
+
+    window.open(target.toString(), "_blank", "noopener,noreferrer");
+  }
+
+  function saveLocalUrl() {
+    const normalized = normalizeLocalUrl(localUrlDraft);
+
+    if (!normalized) {
+      setLocalError("Endereço inválido. Exemplo: http://localhost:3000");
+      return;
+    }
+
+    try {
+      localStorage.setItem(LOCAL_URL_KEY, normalized);
+    } catch {
+      // Ignora storage indisponível; vale para a sessão atual.
+    }
+
+    setLocalUrl(normalized);
+    setLocalUrlDraft(normalized);
+    setLocalError(null);
+    setLocalSettingsOpen(false);
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b-[3px] border-ink bg-cream/95 backdrop-blur-sm">
@@ -304,7 +444,7 @@ export function VideoDownloader() {
 
           <div className="hidden items-center gap-2 rounded-full border-[3px] border-ink bg-paper px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] shadow-brutal-sm sm:flex">
             <span className="h-2 w-2 rounded-full border-2 border-ink bg-green" />
-            roda local · sem anúncios
+            {serverLocal ? "roda local · sem anúncios" : "demo online · use sua máquina"}
           </div>
         </div>
       </header>
@@ -340,7 +480,9 @@ export function VideoDownloader() {
           className="brutal-card-lg relative mx-auto mt-8 w-full max-w-2xl p-2.5"
         >
           <div className="absolute -top-3.5 left-6 z-10 -rotate-3">
-            <span className="sticker bg-orange">100% local</span>
+            <span className="sticker bg-orange">
+              {serverLocal ? "100% local" : "modo demo"}
+            </span>
           </div>
 
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
@@ -418,6 +560,106 @@ export function VideoDownloader() {
             +1.000 sites
           </span>
         </div>
+
+        {!serverLocal && (
+          <section className="brutal-card mx-auto mt-6 w-full max-w-2xl p-3.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-[3px] border-ink bg-green text-ink shadow-brutal-sm">
+                <DownloadIcon className="h-4 w-4" />
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-sm uppercase">Processar na sua máquina</p>
+                <p className="mt-0.5 text-[11px] font-medium leading-snug text-mute">
+                  Use o IP da sua casa para baixar sem bloqueios e sem os limites do servidor.
+                </p>
+                {localUrl && (
+                  <p className="mt-1 truncate text-[10px] font-bold text-ink/40">
+                    {localUrl}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex w-full gap-2 sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleProcessLocal}
+                  className="brutal-btn-primary h-10 flex-1 px-3 text-[10px] uppercase tracking-wide sm:flex-none"
+                >
+                  <DownloadIcon className="h-3.5 w-3.5" />
+                  Processar na minha máquina
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocalSettingsOpen((open) => !open);
+                    setLocalError(null);
+                  }}
+                  className="brutal-btn-ghost h-10 px-3 text-[10px] uppercase tracking-wide"
+                >
+                  {localSettingsOpen ? "Fechar" : "Configurar"}
+                </button>
+              </div>
+            </div>
+
+            {localSettingsOpen && (
+              <div className="mt-3 border-t-[3px] border-dashed border-ink/20 pt-3">
+                <label
+                  htmlFor="local-url"
+                  className="text-[10px] font-bold uppercase tracking-[0.1em] text-mute"
+                >
+                  Endereço do app no seu computador
+                </label>
+
+                <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="local-url"
+                    value={localUrlDraft}
+                    onChange={(event) => {
+                      setLocalUrlDraft(event.target.value);
+                      if (localError) setLocalError(null);
+                    }}
+                    placeholder="http://localhost:3000"
+                    inputMode="url"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="h-10 min-w-0 flex-1 rounded-lg border-[3px] border-ink bg-cream px-3 text-xs font-medium text-ink outline-none placeholder:text-mute/60"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveLocalUrl}
+                    className="brutal-btn-primary h-10 px-3 text-[10px] uppercase tracking-wide"
+                  >
+                    <CheckIcon className="h-3.5 w-3.5" />
+                    Salvar
+                  </button>
+                </div>
+
+                {localError && (
+                  <p className="mt-1.5 text-[11px] font-bold leading-snug text-tomato">
+                    {localError}
+                  </p>
+                )}
+
+                <div className="mt-2 space-y-1 text-[10.5px] font-medium leading-relaxed text-mute">
+                  <p>
+                    <strong className="text-ink">Computador:</strong>{" "}
+                    <code>http://localhost:3000</code> com <code>npm run dev</code>{" "}
+                    rodando.
+                  </p>
+                  <p>
+                    <strong className="text-ink">Celular:</strong> use o IP do Mac
+                    na mesma Wi-Fi ou rode <code>npm run share</code> e cole a URL{" "}
+                    <code>https://…trycloudflare.com</code>.
+                  </p>
+                  <p className="text-ink/45">
+                    Trate a URL do túnel como uma senha. O Mac precisa estar ligado.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <div
           aria-hidden

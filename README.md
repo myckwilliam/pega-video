@@ -46,6 +46,7 @@ npm run start      # serve o build
 npm run lint       # eslint
 npm run typecheck  # TypeScript
 npm run setup      # baixa/atualiza o yt-dlp local
+npm run share      # expõe o app local via túnel Cloudflare (para celular)
 ```
 
 ## Como funciona
@@ -97,11 +98,26 @@ scripts/
 bin/                    # yt-dlp (ignorado pelo git)
 ```
 
+## Processar na sua máquina (IP residencial)
+
+Na demo da Vercel, o botão **Processar na minha máquina** abre o app local com o link já preenchido. O download roda no seu computador, com o IP da sua casa — sem o bloqueio de datacenter e sem os limites do serverless.
+
+- **Computador:** deixe `npm run dev` rodando. O endereço padrão é `http://localhost:3000`.
+- **Celular na mesma Wi-Fi:** no site, clique em **Configurar** e use o endereço Network que o `npm run dev` mostra (ex.: `http://192.168.1.10:3000`).
+- **Celular fora de casa:** rode `npm run share` e cole a URL `https://….trycloudflare.com` em **Configurar**. O Mac precisa estar ligado.
+
+O celular não roda `yt-dlp`/`ffmpeg`; quem processa é o Mac. A URL do túnel funciona como uma senha: para uso público, coloque Cloudflare Access ou autenticação na frente.
+
+```bash
+brew install cloudflared
+npm run share
+```
+
 ## Deploy
 
 Demo online: **https://pegavideo.vercel.app**
 
-> **Atenção:** a Vercel serve como demonstração da interface. O download em si precisa de um processo persistente com `yt-dlp` e `ffmpeg`: funções serverless são congeladas depois da resposta, não têm ffmpeg e o YouTube bloqueia IPs de datacenter. Para o app completo, rode localmente ou use um host com processo persistente (Railway, Render, Fly.io ou uma VPS).
+> **Atenção:** a Vercel serve como demonstração da interface. Use o botão **Processar na minha máquina** (ou rode localmente) para baixar de verdade: funções serverless são congeladas depois da resposta, não têm ffmpeg e o YouTube bloqueia IPs de datacenter. Para um site público 24/7, use um host com processo persistente (Railway, Render, Fly.io ou uma VPS) e, para YouTube, cookies/proxy residencial.
 
 ## Limitações
 
