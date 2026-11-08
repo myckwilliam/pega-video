@@ -33,13 +33,13 @@ function progressWidth(job: JobView): string {
 function barColor(job: JobView): string {
   switch (job.status) {
     case "ready":
-      return "bg-emerald-400";
+      return "bg-green";
     case "error":
-      return "bg-rose-400";
+      return "bg-tomato";
     case "canceled":
-      return "bg-white/25";
+      return "bg-ink/30";
     default:
-      return "bg-gradient-to-r from-[#ff5c38] to-[#ffb020]";
+      return "bg-orange";
   }
 }
 
@@ -86,33 +86,35 @@ export function DownloadCard({
   const Icon = job.kind === "audio" || job.kind === "mp3" ? MusicIcon : FilmIcon;
 
   return (
-    <div className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-white/10 bg-[#101016]/95 shadow-[0_24px_70px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl">
-      <div className="flex items-start gap-3 p-4 pb-3">
+    <div className="pointer-events-auto w-full overflow-hidden rounded-2xl border-[3px] border-ink bg-paper shadow-brutal-lg">
+      <div className="flex items-start gap-3 border-b-[3px] border-ink bg-cream/60 p-4 pb-3">
         <div
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border-[3px] border-ink text-ink shadow-brutal-sm ${
             job.status === "ready"
-              ? "bg-emerald-400/15 text-emerald-300"
+              ? "bg-green"
               : job.status === "error"
-                ? "bg-rose-400/15 text-rose-300"
-                : "bg-gradient-to-br from-[#ff6a3d]/25 to-[#ffb020]/10 text-[#ffb020]"
+                ? "bg-tomato"
+                : job.status === "canceled"
+                  ? "bg-ink/15"
+                  : "bg-yellow"
           }`}
         >
           {job.status === "ready" ? (
-            <CheckIcon className="h-4.5 w-4.5" />
+            <CheckIcon className="h-4 w-4" />
           ) : job.status === "error" ? (
-            <AlertIcon className="h-4.5 w-4.5" />
+            <AlertIcon className="h-4 w-4" />
           ) : active ? (
             <Spinner className="h-4 w-4" />
           ) : (
-            <Icon className="h-4.5 w-4.5" />
+            <Icon className="h-4 w-4" />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-[13px] font-medium leading-snug text-white/90">
+          <p className="line-clamp-2 text-[13px] font-bold leading-snug">
             {job.title}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-white/35">
+          <p className="mt-0.5 truncate text-[11px] font-medium text-mute">
             {job.label ? `${job.label} · ` : ""}
             {job.status === "ready"
               ? `${formatBytes(job.size)} · ${job.filename ?? ""}`
@@ -123,21 +125,17 @@ export function DownloadCard({
         <button
           type="button"
           onClick={() => onDismiss(job.id)}
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70"
+          className="brutal-icon-btn h-7 w-7 shrink-0"
           aria-label="Fechar"
         >
           <CloseIcon className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="px-4">
-        <div
-          className={`h-1.5 overflow-hidden rounded-full ${
-            job.status === "preparing" ? "bg-white/8" : "bg-white/[0.06]"
-          }`}
-        >
+      <div className="p-4 pt-3">
+        <div className="h-3 overflow-hidden rounded-full border-[3px] border-ink bg-cream">
           {job.status === "preparing" ? (
-            <div className="h-full w-1/3 animate-[slide_1.1s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-[#ff5c38] to-[#ffb020]" />
+            <div className="h-full w-1/3 animate-[slide_1.1s_ease-in-out_infinite] rounded-full bg-orange" />
           ) : (
             <div
               className={`h-full rounded-full transition-[width] duration-500 ${barColor(job)} ${
@@ -148,11 +146,11 @@ export function DownloadCard({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 py-2.5">
-          <div className="min-w-0 text-[11px] text-white/40">
+        <div className="flex items-center justify-between gap-2 pt-2.5">
+          <div className="min-w-0 text-[11px] font-bold text-mute">
             {job.status === "downloading" && (
               <span className="flex items-center gap-1.5">
-                <span className="tabular-nums text-white/60">
+                <span className="tabular-nums text-ink">
                   {Math.round(job.progress)}%
                 </span>
                 {job.speed && <span>· {job.speed}</span>}
@@ -160,23 +158,23 @@ export function DownloadCard({
               </span>
             )}
             {job.status === "ready" && (
-              <span className="text-emerald-300/80">
+              <span className="text-ink/70">
                 Se o download não abriu, use “Salvar arquivo”.
               </span>
             )}
             {job.status === "error" && (
-              <span className="line-clamp-2 text-rose-300/80">{job.error}</span>
+              <span className="line-clamp-2 text-ink">{job.error}</span>
             )}
             {job.status === "canceled" && <span>Download cancelado.</span>}
             {job.status === "processing" && <span>Isso pode levar alguns segundos.</span>}
             {job.status === "preparing" && <span>Conectando ao site…</span>}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             {job.status === "ready" && (
               <a
                 href={`/api/downloads/file?id=${encodeURIComponent(job.id)}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-400/15 px-2.5 py-1.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-400/25"
+                className="brutal-btn h-8 bg-green px-2.5 text-[10px] uppercase tracking-wide"
               >
                 <DownloadIcon className="h-3.5 w-3.5" />
                 Salvar
@@ -186,7 +184,7 @@ export function DownloadCard({
               <button
                 type="button"
                 onClick={() => onCancel(job.id)}
-                className="rounded-lg px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/5 hover:text-white/70"
+                className="brutal-btn-ghost h-8 px-2.5 text-[10px] uppercase tracking-wide"
               >
                 Cancelar
               </button>
@@ -195,7 +193,7 @@ export function DownloadCard({
               <button
                 type="button"
                 onClick={() => onDismiss(job.id)}
-                className="rounded-lg px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/5 hover:text-white/70"
+                className="brutal-btn-ghost h-8 px-2.5 text-[10px] uppercase tracking-wide"
               >
                 Fechar
               </button>

@@ -40,16 +40,19 @@ const STEPS = [
     icon: LinkIcon,
     title: "Cole o link",
     text: "YouTube, TikTok, Instagram, X, Vimeo e mais de mil sites.",
+    color: "bg-pink",
   },
   {
     icon: FilmIcon,
     title: "Escolha a qualidade",
     text: "MP4 em várias resoluções ou só o áudio, em MP3.",
+    color: "bg-blue",
   },
   {
     icon: DownloadIcon,
     title: "Baixe",
     text: "O arquivo é preparado e salvo direto no seu computador.",
+    color: "bg-yellow",
   },
 ];
 
@@ -285,43 +288,48 @@ export function VideoDownloader() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#ff6a3d] to-[#ffb020] text-[#1a0d06] shadow-[0_10px_28px_-10px_rgba(255,106,61,0.85)]">
-            <LogoIcon className="h-5 w-5" />
+      <header className="sticky top-0 z-30 border-b-[3px] border-ink bg-cream/95 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-10 w-10 place-items-center rounded-lg border-[3px] border-ink bg-tomato text-ink shadow-brutal-sm">
+              <LogoIcon className="h-5 w-5" />
+            </span>
+            <span className="font-display text-xl uppercase leading-none">
+              Pega
+              <span className="ml-1 inline-block bg-yellow px-1 text-ink">
+                Vídeo
+              </span>
+            </span>
           </div>
-          <span className="text-[15px] font-semibold tracking-[-0.02em] text-white/90">
-            Pega<span className="text-white/40">Vídeo</span>
-          </span>
-        </div>
 
-        <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10.5px] text-white/40 sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          roda local · sem anúncios
+          <div className="hidden items-center gap-2 rounded-full border-[3px] border-ink bg-paper px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] shadow-brutal-sm sm:flex">
+            <span className="h-2 w-2 rounded-full border-2 border-ink bg-green" />
+            roda local · sem anúncios
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-5 pb-20">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-20 sm:px-6">
         <section className="relative pt-10 text-center sm:pt-16">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-16 mx-auto h-64 max-w-2xl rounded-full bg-[radial-gradient(closest-side,rgba(255,106,61,0.16),transparent)] blur-2xl"
-          />
+          <div className="mb-5 flex flex-wrap items-center justify-center gap-2">
+            <span className="sticker -rotate-2 bg-pink">
+              <SparklesIcon className="h-3 w-3" />
+              cole. analise. baixe.
+            </span>
+            <span className="sticker rotate-1 bg-green">sem cadastro</span>
+          </div>
 
-          <span className="relative inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/45">
-            <SparklesIcon className="h-3 w-3 text-[#ffb020]" />
-            Cole. Analise. Baixe.
-          </span>
-
-          <h1 className="relative mt-5 text-balance text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.045em] text-white/95 sm:text-6xl">
-            Baixe vídeos de
+          <h1 className="font-display text-[clamp(32px,10.5vw,44px)] uppercase leading-[0.85] sm:text-7xl">
+            Baixe vídeos
+            <span className="hidden sm:inline"> de</span>
             <br />
-            <span className="bg-gradient-to-r from-[#ff8a5b] via-[#ffb020] to-[#ff5c38] bg-clip-text text-transparent">
+            <span className="mt-1 inline-block -rotate-1 bg-yellow px-2 text-ink [box-decoration-break:clone]">
+              <span className="sm:hidden">de </span>
               qualquer link.
             </span>
           </h1>
 
-          <p className="relative mx-auto mt-4 max-w-xl text-pretty text-[13px] leading-relaxed text-white/40 sm:text-sm">
+          <p className="mx-auto mt-5 max-w-xl text-pretty text-sm font-medium leading-relaxed text-ink/75">
             Cole a URL de um vídeo e escolha a qualidade. O arquivo é baixado
             direto no seu computador, sem cadastro.
           </p>
@@ -329,11 +337,15 @@ export function VideoDownloader() {
 
         <form
           onSubmit={handleSubmit}
-          className="relative mx-auto mt-8 w-full max-w-2xl rounded-[22px] border border-white/10 bg-[#0e0e14]/80 p-2 shadow-[0_30px_90px_-40px_rgba(0,0,0,1)] backdrop-blur-xl"
+          className="brutal-card-lg relative mx-auto mt-8 w-full max-w-2xl p-2.5"
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 transition focus-within:border-[#ff6a3d]/35 focus-within:bg-white/[0.05]">
-              <LinkIcon className="h-4 w-4 shrink-0 text-white/30" />
+          <div className="absolute -top-3.5 left-6 z-10 -rotate-3">
+            <span className="sticker bg-orange">100% local</span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border-[3px] border-ink bg-cream px-3 shadow-brutal-sm transition-shadow focus-within:shadow-brutal">
+              <LinkIcon className="h-4 w-4 shrink-0 text-ink/50" />
               <input
                 ref={inputRef}
                 value={url}
@@ -347,7 +359,7 @@ export function VideoDownloader() {
                 spellCheck={false}
                 placeholder="Cole o link do vídeo aqui…"
                 aria-label="Link do vídeo"
-                className="h-12 w-full min-w-0 bg-transparent text-[13px] text-white/85 outline-none placeholder:text-white/25"
+                className="h-12 w-full min-w-0 bg-transparent text-sm font-medium text-ink outline-none placeholder:text-mute/60"
               />
               {url && (
                 <button
@@ -356,7 +368,7 @@ export function VideoDownloader() {
                     setUrl("");
                     inputRef.current?.focus();
                   }}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/25 transition hover:bg-white/5 hover:text-white/60"
+                  className="brutal-icon-btn h-7 w-7 shrink-0"
                   aria-label="Limpar link"
                 >
                   <CloseIcon className="h-3.5 w-3.5" />
@@ -364,12 +376,12 @@ export function VideoDownloader() {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2.5">
               <button
                 type="button"
                 onClick={handlePaste}
                 disabled={pasting}
-                className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-[12.5px] font-medium text-white/55 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white/80 disabled:opacity-50 sm:flex-none"
+                className="brutal-btn-ghost h-12 flex-1 px-3 text-xs uppercase tracking-wide sm:flex-none sm:px-4 sm:text-sm"
               >
                 {pasting ? (
                   <Spinner className="h-3.5 w-3.5" />
@@ -382,7 +394,7 @@ export function VideoDownloader() {
               <button
                 type="submit"
                 disabled={loading || !url.trim()}
-                className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#ff5c38] to-[#ff9f1c] px-5 text-[12.5px] font-semibold text-[#1a0d06] shadow-[0_12px_30px_-12px_rgba(255,106,61,0.9)] transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                className="brutal-btn-primary h-12 flex-1 px-3 text-xs uppercase tracking-wide sm:flex-none sm:px-5 sm:text-sm"
               >
                 {loading ? (
                   <Spinner className="h-4 w-4" />
@@ -395,26 +407,34 @@ export function VideoDownloader() {
           </div>
         </form>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[10.5px] text-white/25">
-          <span className="text-white/20">Funciona com</span>
-          {PLATFORMS.map((platform, index) => (
-            <span key={platform} className="flex items-center gap-2.5">
-              {index > 0 && <span className="text-white/10">·</span>}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-mute">
+          <span className="mr-1">Funciona com</span>
+          {PLATFORMS.map((platform) => (
+            <span key={platform} className="chip px-2.5 py-0.5 text-[10px]">
               {platform}
             </span>
           ))}
-          <span className="text-white/10">·</span>
-          <span className="text-white/20">e +1.000 sites</span>
+          <span className="chip bg-yellow px-2.5 py-0.5 text-[10px]">
+            +1.000 sites
+          </span>
         </div>
 
+        <div
+          aria-hidden
+          className="film-strip mx-auto mt-8 h-[10px] w-48 rounded-full"
+        />
+
         {error && (
-          <div className="mx-auto mt-5 flex w-full max-w-2xl items-start gap-2.5 rounded-xl border border-rose-500/20 bg-rose-500/[0.07] px-3.5 py-3 text-[12px] leading-relaxed text-rose-200/90">
-            <AlertIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <div
+            role="alert"
+            className="brutal-card mx-auto mt-6 flex w-full max-w-2xl items-start gap-2.5 bg-tomato p-3.5 text-sm font-bold leading-relaxed text-ink"
+          >
+            <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="flex-1">{error}</p>
             <button
               type="button"
               onClick={() => setError(null)}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-rose-200/40 transition hover:bg-white/5 hover:text-rose-100"
+              className="brutal-icon-btn h-6 w-6 shrink-0"
               aria-label="Fechar erro"
             >
               <CloseIcon className="h-3 w-3" />
@@ -423,19 +443,19 @@ export function VideoDownloader() {
         )}
 
         {loading && !video && (
-          <section className="mt-8 animate-pulse overflow-hidden rounded-3xl border border-white/[0.07] bg-[#0c0c11]/60 p-4 sm:p-5">
+          <section className="brutal-card mx-auto mt-8 w-full max-w-2xl p-4 sm:p-5">
             <div className="grid gap-4 sm:grid-cols-[240px_1fr]">
-              <div className="aspect-video rounded-2xl bg-white/[0.05] sm:aspect-auto sm:min-h-[150px]" />
+              <div className="skeleton aspect-video rounded-xl sm:aspect-auto sm:min-h-[150px]" />
               <div className="space-y-3 py-2">
-                <div className="h-3 w-20 rounded-full bg-white/[0.05]" />
-                <div className="h-4 w-full rounded-full bg-white/[0.06]" />
-                <div className="h-4 w-2/3 rounded-full bg-white/[0.05]" />
-                <div className="h-3 w-40 rounded-full bg-white/[0.04]" />
+                <div className="skeleton h-3 w-20 rounded-full" />
+                <div className="skeleton h-4 w-full rounded-full" />
+                <div className="skeleton h-4 w-2/3 rounded-full" />
+                <div className="skeleton h-3 w-40 rounded-full" />
               </div>
             </div>
             <div className="mt-5 space-y-2">
-              <div className="h-16 rounded-xl bg-white/[0.03]" />
-              <div className="h-16 rounded-xl bg-white/[0.03]" />
+              <div className="skeleton h-16 rounded-xl" />
+              <div className="skeleton h-16 rounded-xl" />
             </div>
           </section>
         )}
@@ -453,26 +473,26 @@ export function VideoDownloader() {
         )}
 
         {!video && !loading && (
-          <div className="mx-auto mt-12 grid max-w-2xl gap-3 sm:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-2xl gap-4 sm:grid-cols-3">
             {STEPS.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div
                   key={step.title}
-                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"
+                  className="brutal-card p-4 transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="grid h-8 w-8 place-items-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-[#ffb020]/80">
+                    <div
+                      className={`grid h-9 w-9 place-items-center rounded-lg border-[3px] border-ink text-ink shadow-brutal-sm ${step.color}`}
+                    >
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[10px] font-mono text-white/15">
+                    <span className="rounded-full border-2 border-ink bg-cream px-2 py-0.5 font-display text-[10px]">
                       0{index + 1}
                     </span>
                   </div>
-                  <p className="mt-3 text-[12.5px] font-medium text-white/70">
-                    {step.title}
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-white/30">
+                  <p className="mt-3 text-sm font-bold">{step.title}</p>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-mute">
                     {step.text}
                   </p>
                 </div>
@@ -484,29 +504,29 @@ export function VideoDownloader() {
         {history.length > 0 && (
           <section className="mx-auto mt-12 w-full max-w-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-[12px] font-medium text-white/50">
-                <HistoryIcon className="h-3.5 w-3.5" />
+              <h2 className="flex items-center gap-1.5 font-display text-lg uppercase">
+                <HistoryIcon className="h-4 w-4" />
                 Recentes
               </h2>
               <button
                 type="button"
                 onClick={clearHistory}
-                className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10.5px] text-white/25 transition hover:bg-white/5 hover:text-white/60"
+                className="brutal-btn-ghost px-2.5 py-1 text-[10px] uppercase tracking-wide"
               >
                 <TrashIcon className="h-3 w-3" />
                 Limpar
               </button>
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {history.map((item) => (
                 <button
                   key={item.url}
                   type="button"
                   onClick={() => void analyze(item.url)}
-                  className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-2 text-left transition hover:border-white/15 hover:bg-white/[0.04]"
+                  className="brutal-card group flex items-center gap-3 p-2 text-left transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
                 >
-                  <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/[0.04]">
+                  <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-lg border-[3px] border-ink bg-blue/30">
                     {item.thumbnail ? (
                       <img
                         src={item.thumbnail}
@@ -516,22 +536,22 @@ export function VideoDownloader() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="grid h-full place-items-center text-white/20">
+                      <div className="grid h-full place-items-center text-ink/40">
                         <FilmIcon className="h-4 w-4" />
                       </div>
                     )}
                     {item.duration ? (
-                      <span className="absolute bottom-1 right-1 rounded bg-black/75 px-1 py-0.5 text-[9px] tabular-nums text-white/80">
+                      <span className="absolute bottom-1 right-1 rounded border-2 border-ink bg-ink px-1 py-0.5 text-[9px] font-bold tabular-nums text-cream">
                         {formatDuration(item.duration)}
                       </span>
                     ) : null}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-[11.5px] font-medium leading-snug text-white/65 transition group-hover:text-white/90">
+                    <p className="line-clamp-2 text-xs font-bold leading-snug">
                       {item.title}
                     </p>
-                    <p className="mt-1 truncate text-[9.5px] uppercase tracking-wide text-white/25">
+                    <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-mute">
                       {item.domain}
                     </p>
                   </div>
@@ -542,18 +562,21 @@ export function VideoDownloader() {
         )}
       </main>
 
-      <footer className="mx-auto w-full max-w-4xl px-5 pb-8 text-center text-[10px] leading-relaxed text-white/20">
-        <p>
-          Use apenas para conteúdo que você tem direito de baixar. O app não
-          hospeda arquivos: tudo é processado localmente no seu computador.
-        </p>
-        <p className="mt-1.5 text-white/15">
-          yt-dlp + ffmpeg · sem login · sem rastreamento
-        </p>
+      <footer className="mt-auto">
+        <div aria-hidden className="film-strip h-[10px] w-full" />
+        <div className="mx-auto w-full max-w-4xl px-5 py-6 text-center text-[11px] font-medium leading-relaxed text-mute">
+          <p>
+            Use apenas para conteúdo que você tem direito de baixar. O app não
+            hospeda arquivos: tudo é processado localmente no seu computador.
+          </p>
+          <p className="mt-1.5 font-bold uppercase tracking-[0.12em] text-ink/50">
+            yt-dlp + ffmpeg · sem login · sem rastreamento
+          </p>
+        </div>
       </footer>
 
       {jobs.length > 0 && (
-        <div className="pointer-events-none fixed inset-x-3 bottom-3 z-50 flex flex-col items-stretch gap-2 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[380px]">
+        <div className="pointer-events-none fixed inset-x-3 bottom-3 z-50 flex flex-col items-stretch gap-3 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[380px]">
           {jobs.slice(0, 3).map((job) => (
             <DownloadCard
               key={job.id}
