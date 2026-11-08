@@ -86,6 +86,12 @@ scripts/
 bin/                    # yt-dlp (ignorado pelo git)
 ```
 
+## Deploy
+
+Demo online: **https://pegavideo.vercel.app**
+
+> **Atenção:** a Vercel serve como demonstração da interface. O download em si precisa de um processo persistente com `yt-dlp` e `ffmpeg`: funções serverless são congeladas depois da resposta, não têm ffmpeg e o YouTube bloqueia IPs de datacenter. Para o app completo, rode localmente ou use um host com processo persistente (Railway, Render, Fly.io ou uma VPS).
+
 ## Limitações
 
 - Os downloads vivem em memória no processo do Next; reiniciar o servidor cancela jobs em andamento. Para uso pessoal/local isso é suficiente.
