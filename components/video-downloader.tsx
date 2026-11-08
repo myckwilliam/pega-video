@@ -470,8 +470,9 @@ export function VideoDownloader({ serverLocal }: { serverLocal: boolean }) {
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-pretty text-sm font-medium leading-relaxed text-ink/75">
-            Cole a URL de um vídeo e escolha a qualidade. O arquivo é baixado
-            direto no seu computador, sem cadastro.
+            {serverLocal
+              ? "Cole a URL de um vídeo e escolha a qualidade. O arquivo é baixado direto no seu computador, sem cadastro."
+              : "Cole a URL e escolha a qualidade. Para baixar, processe na sua máquina com o IP da sua casa."}
           </p>
         </section>
 
@@ -669,10 +670,22 @@ export function VideoDownloader({ serverLocal }: { serverLocal: boolean }) {
         {error && (
           <div
             role="alert"
-            className="brutal-card mx-auto mt-6 flex w-full max-w-2xl items-start gap-2.5 bg-tomato p-3.5 text-sm font-bold leading-relaxed text-ink"
+            className="brutal-card mx-auto mt-6 flex w-full max-w-2xl flex-wrap items-start gap-2.5 bg-tomato p-3.5 text-sm font-bold leading-relaxed text-ink"
           >
             <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="flex-1">{error}</p>
+            <p className="min-w-[12rem] flex-1">{error}</p>
+            {!serverLocal && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  handleProcessLocal();
+                }}
+                className="shrink-0 rounded-lg border-[3px] border-ink bg-yellow px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide shadow-brutal-sm transition hover:-translate-y-0.5"
+              >
+                Na minha máquina
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setError(null)}
