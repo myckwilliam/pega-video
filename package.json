@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/install-yt-dlp.mjs",
     "setup": "node scripts/install-yt-dlp.mjs",
     "postinstall": "node scripts/install-yt-dlp.mjs"
   },

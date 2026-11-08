@@ -177,7 +177,11 @@ export function friendlyError(raw: string): string {
       "Nenhum formato de vídeo foi encontrado nesse link.",
     ],
     [/unsupported url|no suitable extractor/i, "Esse link ainda não é suportado."],
-    [/http error 404|not found/i, "Conteúdo não encontrado (404)."],
+    [
+      /enoent|python3?: (command )?not found|exec: .*not found/i,
+      "O yt-dlp não está disponível neste servidor.",
+    ],
+    [/http error 404|404 not found/i, "Conteúdo não encontrado (404)."],
   ];
 
   for (const [pattern, friendly] of mappings) {
@@ -264,6 +268,9 @@ export function runYtdlp(args: string[], options: RunOptions = {}): Promise<RunR
       }
 
       if (code !== 0) {
+        if (process.env.VERCEL) {
+          console.error("[yt-dlp]", stderr.slice(-2000));
+        }
         reject(new AppError(friendlyError(stderr || stdout), 422));
         return;
       }

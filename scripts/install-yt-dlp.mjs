@@ -92,7 +92,7 @@ if (process.env.YTDLP_SKIP_DOWNLOAD === "1") {
 
 mkdirSync(binDir, { recursive: true });
 
-if (!isWindows && !force && existsSync(zipapp) && existsSync(wrapper)) {
+if (!isWindows && !isVercel && !force && existsSync(zipapp) && existsSync(wrapper)) {
   const version = versionOf(wrapper);
   if (version) {
     console.log(`yt-dlp local pronto (${version}).`);
